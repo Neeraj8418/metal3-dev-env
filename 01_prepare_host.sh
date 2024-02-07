@@ -234,7 +234,6 @@ function init_minikube() {
         configure_minikube
         #NOTE(elfosardo): workaround for https://bugzilla.redhat.com/show_bug.cgi?id=2057769
         sudo mkdir -p /etc/qemu/firmware
-        sudo touch /etc/qemu/firmware/50-edk2-ovmf-amdsev.json
         sudo su -l -c "minikube start --insecure-registry ${REGISTRY}"  "${USER}" || minikube_error=1
         if [[ $minikube_error -eq 0 ]]; then
           break
