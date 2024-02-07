@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# ignore shellcheck v0.9.0 introduced SC2317 about unreachable code
+# that doesn't understand traps, variables, functions etc causing all
+# code called via iterate() to false trigger SC2317
+# shellcheck disable=SC2317
 
 set -u
 
@@ -17,41 +21,41 @@ fi
 
 check_bm_hosts() {
     local FAILS_CHECK="${FAILS}"
-    local NAME ADDRESS USER PASSWORD MAC CRED_NAME CRED_SECRET \
-      BM_HOSTS BM_HOST BM_VMS BM_VMNAME BM_VM_IFACES
+    local NAME ADDRESS USER PASSWORD MAC CRED_NAME CRED_SECRET
+    local BARE_METAL_HOSTS BARE_METAL_HOST BARE_METAL_VMS BARE_METAL_VMNAME BARE_METAL_VM_IFACES
     NAME="${1}"
     ADDRESS="${2}"
     USER="${3}"
     PASSWORD="${4}"
     MAC="${5}"
-    BM_HOSTS="$(kubectl --kubeconfig "${KUBECONFIG}" get baremetalhosts\
+    BARE_METAL_HOSTS="$(kubectl --kubeconfig "${KUBECONFIG}" get baremetalhosts\
       -n metal3 -o json)"
-    BM_VMS="$(sudo virsh list --all)"
-    BM_VMNAME="${NAME//-/_}"
+    BARE_METAL_VMS="$(sudo virsh list --all)"
+    BARE_METAL_VMNAME="${NAME//-/_}"
     # Verify BM host exists
     RESULT_STR="${NAME} Baremetalhost exist"
-    echo "$BM_HOSTS" | grep -w "${NAME}"  > /dev/null
+    echo "${BARE_METAL_HOSTS}" | grep -w "${NAME}"  > /dev/null
     process_status $?
 
-    BM_HOST="$(echo "${BM_HOSTS}" | \
+    BARE_METAL_HOST="$(echo "${BARE_METAL_HOSTS}" | \
       jq ' .items[] | select(.metadata.name=="'"${NAME}"'" )')"
 
     # Verify addresses of the host
     RESULT_STR="${NAME} Baremetalhost address correct"
-    equals "$(echo "${BM_HOST}" | jq -r '.spec.bmc.address')" "${ADDRESS}"
+    equals "$(echo "${BARE_METAL_HOST}" | jq -r '.spec.bmc.address')" "${ADDRESS}"
 
     RESULT_STR="${NAME} Baremetalhost mac address correct"
-    equals "$(echo "${BM_HOST}" | jq -r '.spec.bootMACAddress')" \
+    equals "$(echo "${BARE_METAL_HOST}" | jq -r '.spec.bootMACAddress')" \
       "${MAC}"
 
     # Verify BM host status
     RESULT_STR="${NAME} Baremetalhost status OK"
-    equals "$(echo "${BM_HOST}" | jq -r '.status.operationalStatus')" \
+    equals "$(echo "${BARE_METAL_HOST}" | jq -r '.status.operationalStatus')" \
       "OK"
 
     # Verify credentials exist
     RESULT_STR="${NAME} Baremetalhost credentials secret exist"
-    CRED_NAME="$(echo "${BM_HOST}" | jq -r '.spec.bmc.credentialsName')"
+    CRED_NAME="$(echo "${BARE_METAL_HOST}" | jq -r '.spec.bmc.credentialsName')"
     CRED_SECRET="$(kubectl get secret "${CRED_NAME}" -n metal3 -o json | \
       jq '.data')"
     process_status $?
@@ -67,20 +71,20 @@ check_bm_hosts() {
 
     # Verify the VM was created
     RESULT_STR="${NAME} Baremetalhost VM exist"
-    echo "$BM_VMS "| grep -w "${BM_VMNAME}"  > /dev/null
+    echo "${BARE_METAL_VMS} "| grep -w "${BARE_METAL_VMNAME}"  > /dev/null
     process_status $?
 
     #Verify the VMs interfaces
-    BM_VM_IFACES="$(sudo virsh domiflist "${BM_VMNAME}")"
+    BARE_METAL_VM_IFACES="$(sudo virsh domiflist "${BARE_METAL_VMNAME}")"
     for bridge in ${BRIDGES}; do
       RESULT_STR="${NAME} Baremetalhost VM interface ${bridge} exist"
-      echo "$BM_VM_IFACES" | grep -w "${bridge}"  > /dev/null
+      echo "${BARE_METAL_VM_IFACES}" | grep -w "${bridge}"  > /dev/null
       process_status $?
     done
 
     #Verify the introspection completed successfully
     RESULT_STR="${NAME} Baremetalhost introspecting completed"
-    is_in "$(echo "${BM_HOST}" | jq -r '.status.provisioning.state')" \
+    is_in "$(echo "${BARE_METAL_HOST}" | jq -r '.status.provisioning.state')" \
       "ready available"
 
     echo ""
@@ -184,23 +188,6 @@ EXPTD_V1ALPHAX_V1BETAX_CRDS="clusters.cluster.x-k8s.io \
   machines.cluster.x-k8s.io \
   machinesets.cluster.x-k8s.io \
   baremetalhosts.metal3.io"
-EXPTD_V1ALPHA4_DEPLOYMENTS="capm3-system:capm3-controller-manager \
-  capi-system:capi-controller-manager \
-  capi-kubeadm-bootstrap-system:capi-kubeadm-bootstrap-controller-manager \
-  capi-kubeadm-control-plane-system:capi-kubeadm-control-plane-controller-manager \
-  capi-webhook-system:capi-controller-manager \
-  capi-webhook-system:capi-kubeadm-bootstrap-controller-manager \
-  capi-webhook-system:capi-kubeadm-control-plane-controller-manager \
-  capi-webhook-system:capm3-controller-manager \
-  capm3-system:capm3-baremetal-operator-controller-manager"
-EXPTD_V1ALPHA4_RS="cluster.x-k8s.io/provider:infrastructure-metal3:capm3-system:3 \
-  cluster.x-k8s.io/provider:cluster-api:capi-system:1 \
-  cluster.x-k8s.io/provider:bootstrap-kubeadm:capi-kubeadm-bootstrap-system:1 \
-  cluster.x-k8s.io/provider:control-plane-kubeadm:capi-kubeadm-control-plane-system:1 \
-  cluster.x-k8s.io/provider:infrastructure-metal3:capi-webhook-system:2 \
-  cluster.x-k8s.io/provider:cluster-api:capi-webhook-system:1 \
-  cluster.x-k8s.io/provider:bootstrap-kubeadm:capi-webhook-system:1 \
-  cluster.x-k8s.io/provider:control-plane-kubeadm:capi-webhook-system:1"
 EXPTD_DEPLOYMENTS="capm3-system:capm3-controller-manager \
   capi-system:capi-controller-manager \
   capi-kubeadm-bootstrap-system:capi-kubeadm-bootstrap-controller-manager \
@@ -210,7 +197,7 @@ EXPTD_RS="cluster.x-k8s.io/provider:infrastructure-metal3:capm3-system:2 \
   cluster.x-k8s.io/provider:cluster-api:capi-system:1 \
   cluster.x-k8s.io/provider:bootstrap-kubeadm:capi-kubeadm-bootstrap-system:1 \
   cluster.x-k8s.io/provider:control-plane-kubeadm:capi-kubeadm-control-plane-system:1"
-BRIDGES="provisioning baremetal"
+BRIDGES="provisioning external"
 EXPTD_CONTAINERS="httpd-infra registry vbmc sushy-tools"
 
 FAILS=0
@@ -247,14 +234,10 @@ for name in ${LIST_OF_CRDS[@]}; do
 done
 echo ""
 
-# Verify v1alpha4, v1alpha5 and v1beta1 Operators, Deployments, Replicasets
-if [ "${CAPM3_VERSION}" == "v1alpha4" ]; then
-  iterate check_k8s_entity deployments "${EXPTD_V1ALPHA4_DEPLOYMENTS}"
-  iterate check_k8s_rs "${EXPTD_V1ALPHA4_RS}"
-else
-  iterate check_k8s_entity deployments "${EXPTD_DEPLOYMENTS}"
-  iterate check_k8s_rs "${EXPTD_RS}"
-fi
+# Verify v1beta1 Operators, Deployments, Replicasets
+iterate check_k8s_entity deployments "${EXPTD_DEPLOYMENTS}"
+iterate check_k8s_rs "${EXPTD_RS}"
+
 # Verify the baremetal hosts
 ## Fetch the BM CRs
 RESULT_STR="Fetch Baremetalhosts"
@@ -314,4 +297,3 @@ echo ""
 
 echo -e "\nNumber of failures : $FAILS"
 exit "${FAILS}"
-

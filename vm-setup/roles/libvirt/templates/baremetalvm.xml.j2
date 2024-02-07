@@ -9,7 +9,7 @@
   <os>
     <type arch='{{ libvirt_arch }}' machine='q35'>hvm</type>
 {% if libvirt_firmware  == 'uefi' %}
-     <loader readonly='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE.secboot.fd</loader>
+     <loader readonly='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE.fd</loader>
 {% if libvirt_secure_boot|bool %}
      <nvram template="/usr/share/OVMF/OVMF_VARS.secboot.fd">/var/lib/libvirt/qemu/nvram/{{ item.name }}.fd</nvram>
 {% else %}
@@ -18,6 +18,7 @@
 {% endif %}
     <boot dev='network'/>
     <bootmenu enable='no'/>
+    <bios useserial='yes' rebootTimeout='10000'/>
   </os>
 {% else %}
 <os firmware='efi'>
@@ -30,12 +31,20 @@
     <apic/>
     <pae/>
   </features>
+{% if libvirt_domain_type == 'qemu' %}
+  <cpu mode='host-model'/>
+{% else %}
   <cpu mode='host-passthrough'/>
+{% endif %}
   <clock offset='utc'/>
   <on_poweroff>destroy</on_poweroff>
   <on_reboot>restart</on_reboot>
   <on_crash>restart</on_crash>
   <devices>
+    <disk type="file" device="cdrom">
+      <target dev='{{ libvirt_cdromdev }}' bus='{{ libvirt_cdrombus }}'/>
+      <readonly/>
+    </disk>
     <disk type='volume' device='disk'>
       <driver name='qemu' type='qcow2' cache='unsafe'/>
       <source pool='{{ libvirt_volume_pool }}' volume='{{ item.name }}.qcow2'/>

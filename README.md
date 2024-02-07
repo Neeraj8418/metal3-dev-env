@@ -4,20 +4,24 @@ This repository includes scripts to set up a Metal³ development environment.
 
 ## Build Status
 
-[![Ubuntu V1alpha5 build status](https://jenkins.nordix.org/view/Metal3/job/metal3_main_v1a5_integration_test_ubuntu/badge/icon?subject=Ubuntu%20E2E%20V1alpha5)](https://jenkins.nordix.org/view/Metal3/job/metal3_main_v1a5_integration_test_ubuntu)
-[![CentOS V1alpha5 build status](https://jenkins.nordix.org/view/Metal3/job/metal3_main_v1a5_integration_test_centos/badge/icon?subject=CentOS%20E2E%20V1alpha5)](https://jenkins.nordix.org/view/Metal3/job/metal3_main_v1a5_integration_test_centos)
-[![Ubuntu V1beta1 build status](https://jenkins.nordix.org/view/Metal3/job/metal3_main_v1b1_integration_test_ubuntu/badge/icon?subject=Ubuntu%20E2E%20V1beta1)](https://jenkins.nordix.org/view/Metal3/job/metal3_main_v1b1_integration_test_ubuntu)
-[![CentOS V1beta1 build status](https://jenkins.nordix.org/view/Metal3/job/metal3_main_v1b1_integration_test_centos/badge/icon?subject=CentOS%20E2E%20V1beta1)](https://jenkins.nordix.org/view/Metal3/job/metal3_main_v1b1_integration_test_centos)
+[![Ubuntu Integration daily main build status](https://jenkins.nordix.org/buildStatus/icon?job=metal3_daily_main_integration_test_ubuntu&subject=Ubuntu%20daily%20main)](https://jenkins.nordix.org/view/Metal3%20Periodic/job/metal3_daily_main_integration_test_ubuntu/)
+[![CentOS Integration daily main build status](https://jenkins.nordix.org/buildStatus/icon?job=metal3_daily_main_integration_test_centos&subject=CentOS%20daily%20main)](https://jenkins.nordix.org/view/Metal3%20Periodic/job/metal3_daily_main_integration_test_centos/)
+[![Ubuntu Integration daily release-1.6 build status](https://jenkins.nordix.org/buildStatus/icon?job=metal3_daily_release-1-6_integration_test_ubuntu&subject=Ubuntu%20daily%20release-1.6)](https://jenkins.nordix.org/view/Metal3%20Periodic/job/metal3_daily_release-1-6_integration_test_ubuntu/)
+[![CentOS Integration daily release-1.6 build status](https://jenkins.nordix.org/buildStatus/icon?job=metal3_daily_release-1-6_integration_test_centos&subject=CentOS%20daily%20release-1.6)](https://jenkins.nordix.org/view/Metal3%20Periodic/job/metal3_daily_release-1-6_integration_test_centos/)
+[![Ubuntu Integration daily release-1.5 build status](https://jenkins.nordix.org/buildStatus/icon?job=metal3_daily_release-1-5_integration_test_ubuntu&subject=Ubuntu%20daily%20release-1.5)](https://jenkins.nordix.org/view/Metal3%20Periodic/job/metal3_daily_release-1-5_integration_test_ubuntu/)
+[![CentOS Integration daily release-1.5 build status](https://jenkins.nordix.org/buildStatus/icon?job=metal3_daily_release-1-5_integration_test_centos&subject=CentOS%20daily%20release-1.5)](https://jenkins.nordix.org/view/Metal3%20Periodic/job/metal3_daily_release-1-5_integration_test_centos/)
+[![Ubuntu Integration daily release-1.4 build status](https://jenkins.nordix.org/buildStatus/icon?job=metal3_daily_release-1-4_integration_test_ubuntu&subject=Ubuntu%20daily%20release-1.4)](https://jenkins.nordix.org/view/Metal3%20Periodic/job/metal3_daily_release-1-4_integration_test_ubuntu/)
+[![CentOS Integration daily release-1.4 build status](https://jenkins.nordix.org/buildStatus/icon?job=metal3_daily_release-1-4_integration_test_centos&subject=CentOS%20daily%20release-1.4)](https://jenkins.nordix.org/view/Metal3%20Periodic/job/metal3_daily_release-1-4_integration_test_centos/)
 
 ## Instructions
 
-Instructions can be found here: <https://metal3.io/try-it.html>
+Instructions can be found here: <https://book.metal3.io/developer_environment/tryit>
 
 ## Quickstart
 
-Versions v1alpha4, v1alpha5 or v1beta1 are later referred as **v1alphaX**/**v1betaX**.
+Version v1beta1 is later referred as **v1betaX**.
 
-The v1alphaX or v1betaX deployment can be done with Ubuntu 18.04, 20.04, 22.04 or
+The v1betaX deployment can be done with Ubuntu 18.04, 20.04, 22.04 or
 Centos 9 Stream target host images. By default, for Ubuntu based target hosts
 we are using Ubuntu 22.04
 
@@ -40,22 +44,6 @@ The Minikube machine is deployed with 4GB of RAM, and 2 vCPUs, and the target
 hosts with 4 vCPUs and 4GB of RAM.
 
 ### Environment variables
-
-Select:
-
-```sh
-export CAPM3_VERSION=v1alpha4
-export CAPI_VERSION=v1alpha3
-```
-
-or
-
-```sh
-export CAPM3_VERSION=v1alpha5
-export CAPI_VERSION=v1alpha4
-```
-
-or
 
 ```sh
 export CAPM3_VERSION=v1beta1
@@ -80,14 +68,31 @@ And the following environment variables need to be set for **Flatcar**:
 export IMAGE_OS=flatcar
 ```
 
+By default the virtualization hypervisor used is kvm. To be able to use it
+the nested virtualization needs to be enabled in the host. In case kvm or
+nested virtualization are not available it is possible to switch to qemu,
+although at this moment there are limitations in the execution and it is
+considered as experimental configuration.
+To switch to the qemu hypervisor apply the following setting:
+
+```sh
+export LIBVIRT_DOMAIN_TYPE=qemu
+```
+
 You can check a list of all the environment variables [here](vars.md)
 
 ### Deploy the metal3 Dev env
+
+Note: These scripts are invasive and will reconfigure part of the host OS
+in addition to package installation, and hence it is recommended to run dev-env
+in a VM. Please read the scripts to understand what they do before running them
+on your machine.
 
 ```sh
 ./01_prepare_host.sh
 ./02_configure_host.sh
 ./03_launch_mgmt_cluster.sh
+./04_verify.sh
 ```
 
 or
@@ -99,15 +104,15 @@ make
 ### Deploy the target cluster
 
 ```sh
-./scripts/provision/cluster.sh
-./scripts/provision/controlplane.sh
-./scripts/provision/worker.sh
+./tests/scripts/provision/cluster.sh
+./tests/scripts/provision/controlplane.sh
+./tests/scripts/provision/worker.sh
 ```
 
 ### Pivot to the target cluster
 
 ```sh
-./scripts/provision/pivot.sh
+./tests/scripts/provision/pivot.sh
 ```
 
 ### Delete the target cluster
@@ -116,51 +121,36 @@ make
 kubectl delete cluster "${CLUSTER_NAME:-"test1"}" -n metal3
 ```
 
-### Deploying with Tilt
+### Deploying and developing with Tilt
 
-It is possible to use Tilt to run the CAPI, BMO and CAPM3 components. For this, run:
+It is possible to use Tilt to run the CAPI, BMO, CAPM3 and IPAM components. Tilt
+ephemeral cluster will utilize Kind and Docker, so it requires an Ubuntu host.
+For this, run:
+
+By default, Metal3 components are not built locally. To develop with Tilt, you
+must `export BUILD_[CAPM3|BMO|IPAM|CAPI]_LOCALLY=true`, and then you can edit
+the code in `~/go/src/github.com/metal3-io/...` and it will be picked up by
+Tilt. You can also specify repository URL, branch and commit with `CAPM3REPO`,
+`CAPM3BRANCH` and `CAPM3COMMIT` to make dev-env start the component with your
+development branch content. Same for IPAM, BMO and CAPI.
+See `vars.md` for more information.
+
+After specifying the components and paths to your liking, bring the cluster up
+by setting the ephemeral cluster type to Tilt and image OS to Ubuntu.
 
 ```sh
+export IMAGE_OS=ubuntu
 export EPHEMERAL_CLUSTER="tilt"
 make
 ```
-
-Then clone the Cluster API Provider Metal3 repository, and follow the
-[instructions](https://github.com/metal3-io/cluster-api-provider-metal3/blob/main/docs/dev-setup.md#tilt-development-environment).
-That will mostly be the three following blocks of commands.
-
-```sh
-source lib/common.sh
-source lib/network.sh
-source lib/images.sh
-```
-
-and go to the CAPM3 repository and run
-
-```sh
-make tilt-settings
-```
-
-Please refer to the CAPM3 instructions to include BMO and IPAM. Then run :
-
-```sh
-make tilt-up
-```
-
-Once the cluster is running, you can create the BareMetalHosts :
-
-```sh
-kubectl create namespace metal3
-kubectl apply -f examples/metal3crds/metal3.io_baremetalhosts.yaml
-kubectl apply -n metal3 -f /opt/metal3-dev-env/bmhosts_crs.yaml
-```
-
-Afterwards, you can deploy a target cluster.
 
 If you are running tilt on a remote machine, you can forward the web interface
 by adding the following parameter to the ssh command `-L 10350:127.0.0.1:10350`
 
 Then you can access the Tilt dashboard locally [here](http://127.0.0.1:10350)
+
+*Note*: It is easiest if you configure all these in `config_<username>.sh` file,
+which is automatically sourced if it exists.
 
 ### Recreating local ironic containers
 
@@ -171,8 +161,8 @@ need to use the following instructions:
 source lib/common.sh
 source lib/network.sh
 
-export IRONIC_HOST="${CLUSTER_URL_HOST}"
-export IRONIC_HOST_IP="${CLUSTER_PROVISIONING_IP}"
+export IRONIC_HOST="${CLUSTER_BARE_METAL_PROVISIONER_HOST}"
+export IRONIC_HOST_IP="${CLUSTER_BARE_METAL_PROVISIONER_IP}"
 
 source lib/ironic_tls_setup.sh
 source lib/ironic_basic_auth.sh
@@ -186,3 +176,18 @@ information, regarding the TLS setup and running ironic locally please refer to
 these documents:
 [TLS](https://github.com/metal3-io/cluster-api-provider-metal3/blob/main/docs/getting-started.md)
 , [Run local ironic](https://github.com/metal3-io/baremetal-operator/blob/main/docs/dev-setup.md).
+
+### Test Matrix
+
+The following table describes which branches are tested for different test triggers:
+
+<!-- markdownlint-disable MD013 -->
+
+| test suffix | CAPM3 branch | IPAM branch  | BMO branch/tag  | Keepalived tag | Ironic tag |
+| ----------- | ------------ | -----------  | --------------- | -------------- | ---------- |
+| main        | main         | main         | main            | latest         | latest     |
+| release-1-6 | release-1.6  | release-1.6  | release-0.5     | v0.5.0         | v23.1.0    |
+| release-1-5 | release-1.5  | release-1.5  | release-0.4     | v0.4.1         | v23.1.0    |
+| release-1-4 | release-1.4  | release-1.4  | release-0.3     | v0.3.1         | v23.1.0    |
+
+<!-- markdownlint-enable MD013 -->

@@ -12,8 +12,8 @@ remove_ironic_containers
 # Remove existing pod
 if [[ "${CONTAINER_RUNTIME}" == "podman" ]]; then
   for pod in ironic-pod infra-pod; do
-    if  sudo "${CONTAINER_RUNTIME}" pod exists "${pod}" ; then
-        sudo "${CONTAINER_RUNTIME}" pod rm "${pod}" -f
+    if sudo "${CONTAINER_RUNTIME}" pod exists "${pod}"; then
+      sudo "${CONTAINER_RUNTIME}" pod rm "${pod}" -f
     fi
   done
 fi
@@ -31,41 +31,43 @@ if [ "${CAPM3_RUN_LOCAL}" = true ]; then
   fi
 fi
 
-
 ANSIBLE_FORCE_COLOR=true ansible-playbook \
     -e "working_dir=$WORKING_DIR" \
     -e "num_nodes=$NUM_NODES" \
     -e "extradisks=$VM_EXTRADISKS" \
     -e "virthost=$HOSTNAME" \
-    -e "manage_baremetal=$MANAGE_BR_BRIDGE" \
+    -e "manage_external=$MANAGE_EXT_BRIDGE" \
     -e "nodes_file=$NODES_FILE" \
     -i vm-setup/inventory.ini \
     -b -v vm-setup/teardown-playbook.yml
 
-if [ "$USE_FIREWALLD" == "False" ]; then
- ANSIBLE_FORCE_COLOR=true ansible-playbook \
-    -e "{use_firewalld: $USE_FIREWALLD}" \
-    -e "external_subnet_v4: ${EXTERNAL_SUBNET_V4}" \
+ANSIBLE_FORCE_COLOR=true ansible-playbook \
+    -e "use_firewalld=${USE_FIREWALLD}" \
     -e "firewall_rule_state=absent" \
     -i vm-setup/inventory.ini \
     -b -v vm-setup/firewall.yml
-fi
 
 # There was a bug in this file, it may need to be recreated.
 if [[ $OS == "centos" || $OS == "rhel" ]]; then
   sudo rm -rf /etc/NetworkManager/conf.d/dnsmasq.conf
   if [ "$MANAGE_PRO_BRIDGE" == "y" ]; then
-      sudo ifdown provisioning || true
-      sudo rm -f /etc/sysconfig/network-scripts/ifcfg-provisioning || true
+    sudo nmcli con delete provisioning
   fi
-  # Leaving this around causes issues when the host is rebooted
-  if [ "$MANAGE_BR_BRIDGE" == "y" ]; then
-      sudo ifdown baremetal || true
-      sudo rm -f /etc/sysconfig/network-scripts/ifcfg-baremetal || true
+  # External net should have been cleaned already at this stage, but we double
+  # check as leaving it around causes issues when the host is rebooted
+  if [ "${MANAGE_EXT_BRIDGE}" == "y" ]; then
+    sudo nmcli con delete external || true
   fi
 fi
 
 # Clean up any serial logs
 sudo rm -rf /var/log/libvirt/qemu/*serial0.log*
 
-rm -rf  "${HOME}"/.cluster-api
+# TODO(Sunnatillo): Remove first line after deprication of camp3 v1.4
+rm -rf "${HOME}"/.cluster-api
+
+if [[ -n "${XDG_CONFIG_HOME}" ]]; then
+    rm -rf "${XDG_CONFIG_HOME}"/cluster-api
+else
+    rm -rf "${HOME}"/.config/cluster-api
+fi

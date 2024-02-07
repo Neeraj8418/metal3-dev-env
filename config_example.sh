@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# Choose whether the "baremetal" libvirt network will use IPv4, IPv6, or IPv4+IPv6.
+# Choose whether the "external" libvirt network will use IPv4, IPv6, or IPv4+IPv6.
 # This network is the primary network interface for the virtual bare metal hosts.
 #
 # Note that this only sets up the underlying network, and fully provisioning IPv6
@@ -15,7 +15,7 @@
 #export IP_STACK=v4
 
 #
-# This is the subnet used on the "baremetal" libvirt network, created as the
+# This is the subnet used on the "external" libvirt network, created as the
 # primary network interface for the virtual bare metal hosts.
 #
 # V4 default of 192.168.111.0/24 set in lib/network.sh
@@ -36,12 +36,12 @@
 #export SSH_PUB_KEY=~/.ssh/id_rsa.pub
 
 # Set the controlplane replica count
-#export NUM_OF_CONTROLPLANE_REPLICAS=1
+#export CONTROL_PLANE_MACHINE_COUNT=1
 
 #
 # This variable defines if controlplane should scale-in or scale-out during upgrade
 # The field values can be 0 or 1. Default is 1. When set to 1 controlplane scale-out
-# When set to 0 controlplane scale-in. In case of scale-in NUM_OF_CONTROLPLANE_REPLICAS must be >=3.
+# When set to 0 controlplane scale-in. In case of scale-in CONTROL_PLANE_MACHINE_COUNT must be >=3.
 #
 # In case of worker, this variable defines maximum number of machines that can be scheduled
 # above the desired number of machines. Value can be an absolute number (ex: 5) or a percentage
@@ -122,26 +122,26 @@
 # export BOOT_MODE="UEFI"
 
 # Select the Cluster API provider Metal3 version
-# Accepted values : v1alpha4, v1alpha5, v1beta1
+# Accepted values : v1beta1
 # default: v1beta1
 #
 #export CAPM3_VERSION=v1beta1
 
 # Select the Cluster API version
-# Accepted values : v1alpha3, v1alpha4, v1beta1
+# Accepted values : v1beta1
 # default: v1beta1
 #
 #export CAPI_VERSION=v1beta1
 
-#export KUBERNETES_VERSION="v1.23.5"
-#export UPGRADED_K8S_VERSION="v1.23.5"
+#export KUBERNETES_VERSION="v1.29.0"
+#export UPGRADED_K8S_VERSION="v1.29.0"
 
 # Version of kubelet, kubeadm and kubectl binaries
 #export KUBERNETES_BINARIES_VERSION="${KUBERNETES_BINARIES_VERSION:-${KUBERNETES_VERSION}}"
-#export KUBERNETES_BINARIES_CONFIG_VERSION="v0.13.0"
+#export KUBERNETES_BINARIES_CONFIG_VERSION="v0.15.1"
 
 # Configure provisioning network for single-stack ipv6
-#export PROVISIONING_IPV6=false
+#export BARE_METAL_PROVISIONER_SUBNET_IPV6_ONLY=false
 
 # Image OS (can be "Cirros", "Ubuntu", "Centos", overriden by IMAGE_* if set)
 # Default: Centos
@@ -149,11 +149,11 @@
 
 # Image for target hosts deployment
 #
-#export IMAGE_NAME="CENTOS_8_NODE_IMAGE_K8S_v1.23.5.qcow2"
+#export IMAGE_NAME="CENTOS_9_NODE_IMAGE_K8S_v1.29.0.qcow2"
 
 # Location of the image to download
 #
-#export IMAGE_LOCATION="https://artifactory.nordix.org/artifactory/metal3/images/k8s_v1.23.5"
+#export IMAGE_LOCATION="https://artifactory.nordix.org/artifactory/metal3/images/k8s_v1.29.0"
 
 # Image username for ssh
 #
@@ -179,7 +179,7 @@
 #export CLUSTER_APIENDPOINT_IP="192.168.111.249"
 
 # Cluster provisioning Interface
-#export CLUSTER_PROVISIONING_INTERFACE="ironicendpoint"
+#export BARE_METAL_PROVISIONER_INTERFACE="ironicendpoint"
 
 # POD CIDR
 #export POD_CIDR=${POD_CIDR:-"192.168.0.0/18"}
